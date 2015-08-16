@@ -1,0 +1,80 @@
+<html>
+  <head>
+      <title>Browgine</title>
+      <style>
+          * {
+              margin: 0;
+          }
+
+          .chat {
+
+              height: 100%;
+              width: 300px;
+              position: absolute;
+              top: 0;
+              background-color: white;
+              right: 0;
+              z-index: 999;
+          }
+
+          .chat-content {
+              min-height: 400px;
+              margin: 0;
+          }
+
+          .chat-content li {
+              list-style-type: none
+          }
+
+          .red {
+              color: red;
+          }
+
+          .cyan {
+              color: cyan;
+          }
+
+          #game {
+              position: relative;
+              z-index 1;
+              margin-right: 300px;
+          }
+
+
+          #chat-input {
+              position: absolute;
+              bottom: 40px;
+              height: 40px;
+              font-size: 20px;
+              right: 0;
+              width: 100%;
+          }
+
+          .chat-submit {
+              position: absolute;
+              bottom: 0;
+              height: 40px;
+              font-size: 20px;
+              right: 0;
+              width: 100%;
+          }
+      </style>
+  </head>
+  <body>
+
+    <div id="game"></div>
+    <div class="chat">
+        <ul class="chat-content">
+
+        </ul>
+        <input type="text" id="chat-input">
+        <button class="chat-submit">Send</button>
+    </div>
+    <script type="text/javascript" src="/js/pixi.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script src="/js/foresteers.min.js"></script>
+    <script>
+        window.createGameClient();
+    </script>
+  </body>
+</html>

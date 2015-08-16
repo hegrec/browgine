@@ -1,0 +1,33 @@
+{
+  "name": "Browgine",
+  "version": "1.0.0",
+  "description": "Foresteers web server",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^0.9.0",
+    "browserify": "^8.1.3",
+    "hapi": "^8.3.0",
+    "lodash": "^2.4.1",
+    "mysql": "^2.5.3",
+    "nunjucks": "^1.1.0",
+    "perlin-noise": "0.0.1",
+    "require-globify": "^1.2.1",
+    "socket.io": "^1.3.5",
+    "socket.io-client": "^1.3.5",
+    "squel": "^3.10.0",
+    "striptags": "^2.0.2",
+    "vector2-node": "0.0.3",
+    "wreck": "^5.2.0"
+  },
+  "devDependencies": {
+    "grunt": "^0.4.5",
+    "grunt-browserify": "^3.3.0",
+    "grunt-contrib-watch": "^0.6.1",
+    "shipit-deploy": "^1.1.1"
+  }
+}
