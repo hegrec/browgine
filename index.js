@@ -1,13 +1,17 @@
-var express = require('express');
-var app = express();
-var http = require('http').Server(app);
-var io = require('socket.io').listen(8888);
-var Server = require('./server/server');
+import express from 'express';
+import http from 'http';
 
+let app = express();
+let GameServer = require('./server/server');
+let options = {
+    socketIoPort: 8888,
+    serverPort: 3000
+};
+let server = http.Server(app);
 
 app.use(express.static('public'));
 
-http.listen(3000, function(){
-    var gameServer = new Server(io);
+server.listen(options.serverPort, () => {
+    let gameServer = new GameServer(options);
     gameServer.start();
 });

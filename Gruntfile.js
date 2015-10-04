@@ -10,7 +10,7 @@ module.exports = function(grunt) {
                     'public/js/foresteers.min.js': ['client/**/*.js']
                 },
                 options: {
-                    transform: ['require-globify']
+                    transform: ['babelify','require-globify']
                 }
             }
         },

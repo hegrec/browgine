@@ -2,7 +2,6 @@ var Input = require('./../../common/input'),
     Vec2 = require('vector2-node');
 
 var Player = {
-    className: "player",
     baseClass: "base",
 
     init: function () {

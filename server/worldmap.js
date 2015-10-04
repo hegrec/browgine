@@ -5,40 +5,40 @@
  * @param size
  * @constructor
  */
-function WorldMap() {
-    this.tileMap = [
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0],
-        [0,1,0,1,1,1,1,1,1,1,1,1,1,0],
-        [0,1,0,1,1,1,1,1,1,1,1,1,1,0],
-        [0,1,0,1,1,0,1,1,1,1,1,1,1,0],
-        [0,1,1,1,1,0,1,1,1,1,1,1,1,0],
-        [0,0,0,0,0,0,1,1,1,1,1,1,1,0],
-        [0,0,1,1,1,1,1,1,1,1,1,1,1,0],
-        [0,0,0,0,1,1,1,1,1,1,1,1,1,0],
-        [0,0,0,0,1,1,1,1,1,1,1,1,1,0],
-        [0,1,1,1,1,1,1,1,1,1,1,1,1,0],
-        [0,1,1,1,1,1,1,1,1,1,1,1,1,0],
-        [0,1,1,1,1,1,1,1,1,1,1,1,1,0],
-        [0,1,1,1,1,1,1,1,1,1,1,1,1,0],
-        [0,1,1,1,1,1,1,1,1,1,1,1,1,0],
-        [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    ];
+export default class WorldMap {
+    constructor() {
+        this.tileMap = [
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ];
 
-    this.centerIndex = Math.floor(this.tileMap.length / 2);
-}
-
-WorldMap.prototype.getTileAtPos = function(vec) {
-    var x = this.centerIndex + Math.floor(vec.x+0.5);
-    var y = this.centerIndex - Math.floor(vec.y+0.5);
-    if (!this.tileMap[y]) {
-        return null;
+        this.centerIndex = Math.floor(this.tileMap.length / 2);
     }
 
-    return this.tileMap[y][x];
-};
+    getTileAtPos(vec) {
+        let x = this.centerIndex + Math.floor(vec.x + 0.5);
+        let y = this.centerIndex - Math.floor(vec.y + 0.5);
+        if (!this.tileMap[y]) {
+            return null;
+        }
 
-WorldMap.prototype.getTileMap = function() {
-    return this.tileMap;
-};
+        return this.tileMap[y][x];
+    }
 
-module.exports = WorldMap;
+    getTileMap() {
+        return this.tileMap;
+    }
+}

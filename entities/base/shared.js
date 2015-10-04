@@ -1,11 +1,11 @@
-var constants = require('./../../common/constants'),
-    Vec2 = require('vector2-node'),
-    PhysicsState = require('./../../common/physicsState');
+import constants from './../../common/constants';
+import Vec2 from 'vector2-node';
+import PhysicsState from './../../common/physicsState';
 
 var BaseEntity = {
     uniqueId: 0,
     isBeingRemoved: 0,
-    className: 'base',
+    modelName: 'base',
     physicsType: constants.PHYSICS_TYPE_SIMULATE,
     appliedForce: null,
     appliedTorque: null,
@@ -51,8 +51,12 @@ var BaseEntity = {
         return this.physicsState.angle;
     },
 
-    getClass: function () {
-        return this.className
+    getModel: function () {
+        return this.modelName;
+    },
+
+    setModel: function (model) {
+        this.modelName = model;
     },
 
     getMesh: function () {

@@ -1,3 +1,5 @@
-function Sprite(texture) {
+export default class Sprite {
+    constructor(texture) {
 
+    }
 }

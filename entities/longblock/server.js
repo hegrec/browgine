@@ -1,8 +1,14 @@
 var _ = require('lodash');
-var LongBlockShared = _.clone(require('./shared'));
+var LongBlockShared = require('./shared');
 
-var LongBlockServer = _.merge(LongBlockShared, {
-    serverVariable: 'testServer'
+var LongBlockServer = _.merge(_.clone(LongBlockShared), {
+    serverVariable: 'testServer',
+
+    init: function() {
+        LongBlockShared.init.call(this);
+
+        this.setModel('longblock');
+    }
 });
 
 module.exports = LongBlockServer;

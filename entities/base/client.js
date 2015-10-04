@@ -2,6 +2,7 @@ var _ = require('lodash');
 var BaseSharedEntity = _.clone(require('./shared'));
 
 var BaseClientEntity = _.merge(BaseSharedEntity, {
+
     init: function() {},
 
     setTexture: function (texturePath) {
