@@ -13,14 +13,14 @@ module.exports = function (shipit) {
             servers: 'mealtrap.com'
         },
         production: {
-            servers: 'nodeapps@mealtrap.com'
+            servers: 'nodeapps@immown.com'
         }
     });
 
     shipit.on('published', function() {
         shipit.remote('cd /opt/browgine/current && npm install').then(function(res) {
             shipit.log(res);
-                shipit.remote('pm2 restart api').then(function(res) {
+                shipit.remote('pm2 restart browgine').then(function(res) {
                     shipit.log(res);
                 });
         });
