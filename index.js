@@ -11,7 +11,7 @@ let server = http.Server(app);
 
 app.use(express.static('public'));
 
-server.listen(options.serverPort, () => {
+server.listen(options.serverPort, '0.0.0.0', () => {
     let gameServer = new GameServer(options);
     gameServer.start();
 });
