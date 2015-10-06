@@ -18,7 +18,7 @@ module.exports = function (shipit) {
     });
 
     shipit.on('published', function() {
-        shipit.remote('cd /opt/browgine/current && npm install').then(function(res) {
+        shipit.remote('cd /opt/browgine/current && npm install && grunt').then(function(res) {
             shipit.log(res);
                 shipit.remote('pm2 restart browgine').then(function(res) {
                     shipit.log(res);

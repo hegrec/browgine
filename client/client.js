@@ -15,8 +15,11 @@ const KEY_SPACE = 32;
 export default class Client {
     constructor() {
         let host = window.location.hostname;
+        host = `http://${host}:8888`;
 
-        this.socket = client.connect(`http://${host}:8888`, {
+        console.log(host);
+
+        this.socket = client.connect(host, {
             'reconnect': false
         });
 
