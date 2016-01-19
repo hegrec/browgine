@@ -5,7 +5,7 @@ let app = express();
 let GameServer = require('./server/server');
 let options = {
     socketIoPort: 8888,
-    serverPort: 4000
+    serverPort: 4111
 };
 let server = http.Server(app);
 
