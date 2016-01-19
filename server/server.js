@@ -7,6 +7,8 @@ import Physics from './physics';
 import WorldMap from './worldmap';
 import socketIo from 'socket.io';
 
+const PLAYER_TIMEOUT = 10; //10 seconds without activity and player is logged out.
+
 export default class GameServer {
     constructor(options) {
         this.connectedPlayers = [];
@@ -242,6 +244,17 @@ export default class GameServer {
             }
 
             if (entity.isBeingRemoved) {
+                if (entity.isPlayer()) {
+                    let message = 'Player has disconnected';
+                    if (entity.laggedOut) {
+                        message = 'Player has lagged out';
+                    }
+
+                    console.log(message);
+
+                }
+
+
                 this.removeEntity(entity, index);
             } else {
                 index++;
@@ -324,8 +337,8 @@ export default class GameServer {
 
     validateConnectedPlayers(currentTime) {
         for (let player of this.connectedPlayers) {
-            if (currentTime - player.lastInputTime > 1000) {
-                console.log("should remove this player");
+            if (currentTime - player.lastInputTime > PLAYER_TIMEOUT*1000) {
+                player.laggedOut = true;
                 player.shouldRemove(true);
             }
         }

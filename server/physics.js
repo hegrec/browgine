@@ -68,7 +68,7 @@ export default class Physics {
 
             //If the type type is a wall (0)
             if (currentTile !== 1) {
-                console.log("Entity " + entity.uniqueId + ' is colliding with world ' + currentTile, entity.getPos());
+                //console.log("Entity " + entity.uniqueId + ' is colliding with world ' + currentTile, entity.getPos());
 
                 let oldPos = entity.getLastPhysicsState().position.copy();
                 let newPos = entity.getPos();
