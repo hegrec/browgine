@@ -17,8 +17,6 @@ export default class Client {
         let host = window.location.hostname;
         host = `http://${host}:8888`;
 
-        console.log(host);
-
         this.socket = client.connect(host, {
             'reconnect': false
         });
@@ -36,6 +34,10 @@ export default class Client {
         this.chat = new Chat();
         this.chat.setChatListener((message) => {
             this.socket.emit('chat', message);
+        });
+
+        this.socket.on('chat', (message) => {
+            this.chat.newMessage(message);
         });
 
         this.socket.on('disconnect', () => {
@@ -70,8 +72,8 @@ export default class Client {
             updatedEntity.setAngle(entityData.angle);
             updatedEntity.getPhysicsState().buildAABB();
 
-            updatedEntity.entityRenderable.x = entityData.x * 64;
-            updatedEntity.entityRenderable.y = -entityData.y * 64;
+            updatedEntity.entityRenderable.x = entityData.x * 32;
+            updatedEntity.entityRenderable.y = -entityData.y * 32;
 
             updatedEntity.entityRenderable.graphic.rotation = Math.PI - entityData.angle;
 
@@ -160,7 +162,7 @@ export default class Client {
 
         $('#game canvas').attr('tabIndex', 0).focus();
         $('#game canvas').on('click', (evt) => {
-            $(this).focus();
+            evt.target.focus();
         });
         $('#game canvas').keydown((evt) => {
             let keyCode = evt.keyCode;
@@ -342,7 +344,7 @@ export default class Client {
         let debugString = "Pos: (" + createdEntity.getPos().x + ', ' + createdEntity.getPos().y + ')';
 
         createdEntity.debugText = this.renderer.createText(debugString, opts, createdEntity.entityRenderable);
-        createdEntity.debugText.position.y = 64;
+        createdEntity.debugText.position.y = 16;
 
         let model = this.registeredModels[instanceData.model];
 

@@ -1,16 +1,31 @@
-var Vec2 = require('vector2-node'),
-    _ = require('lodash'),
+var _ = require('lodash'),
     SharedPlayer = _.clone(require('./shared'));
 
-var ServerPlayer = _.merge(SharedPlayer, {
-    socket: null,
+let socket = null;
 
-    setSocket: function (socket) {
-        this.socket = socket;
+var ServerPlayer = _.merge(SharedPlayer, {
+    setSocket: function (sck) {
+        socket = sck;
+    },
+
+    getIPAddress: function() {
+        return socket.handshake.address;
     },
 
     disconnect: function () {
-        this.socket.disconnect();
+        socket.disconnect();
+    },
+
+    sendMessage(netMessage) {
+        socket.emit(netMessage.constructor.getMessageName(), netMessage.getMessagePayload());
+    },
+
+    on(messageClass, callback) {
+        socket.on(messageClass.getMessageName(), (messageData) => {
+            const message = new messageClass(messageData);
+
+            callback.call(this, message);
+        })
     }
 });
 

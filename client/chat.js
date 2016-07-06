@@ -6,10 +6,12 @@ export default class Chat {
 
         this.inputElement.on('keypress', (evt) => {
             if (evt.charCode === 13) {
-                let value = $(this).val();
 
+                let value = evt.target.value;
+
+                console.log(value);
                 this.chatListener(value);
-                $(this).val('');
+                evt.target.value = '';
             }
         });
 

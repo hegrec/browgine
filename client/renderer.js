@@ -7,12 +7,12 @@ export default class Renderer {
         this.mapData = [];
         //texture cache
         this.textures = {};
-        this.unitPixelSize = 64; //Vec2(1, 1) is 64x64 pixels
+        this.unitPixelSize = 32; //Vec2(1, 1) is 64x64 pixels
 
         this.renderer = new PIXI.WebGLRenderer(this.width, this.height);
         document.getElementById('game').appendChild(this.renderer.view);
 
-        this.unitPixelSize = 64; //Vec2(1, 1) is 64x64 pixels
+        this.unitPixelSize = 32; //Vec2(1, 1) is 64x64 pixels
 
         // Does not move, fixed position (This is the HUD)
         this.stage = new PIXI.Container();
@@ -109,10 +109,20 @@ export default class Renderer {
                 }
 
                 let color = (b) | (g << 8) | (r << 16);
-                let entityRenderable = new PIXI.Graphics();
-                entityRenderable.beginFill(color);
-                entityRenderable.drawRect(0, 0, this.unitPixelSize, this.unitPixelSize);
-                entityRenderable.endFill();
+                let entityRenderable;
+                if (value === 1) {
+                    var textureData = PIXI.Texture.fromImage('/images/grass.png');
+                    entityRenderable = new PIXI.Container();
+                    entityRenderable.addChild(new PIXI.Sprite(textureData));
+
+
+                } else {
+
+                    entityRenderable = new PIXI.Graphics();
+                    entityRenderable.beginFill(color);
+                    entityRenderable.drawRect(0, 0, this.unitPixelSize, this.unitPixelSize);
+                    entityRenderable.endFill();
+                }
 
                 entityRenderable.position.x = xCenter;
                 entityRenderable.position.y = yCenter;
