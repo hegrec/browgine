@@ -1,4 +1,5 @@
 import Vec2 from 'vector2-node';
+import Input from './../input';
 
 const MESSAGE_NAME = 'playerInput';
 
@@ -7,14 +8,13 @@ function shorten(value) {
 }
 
 export default class NetPlayerInput {
-    constructor() {
-        const input = arguments[0];
-        this.up = shorten(input.up);
-        this.down = shorten(input.down);
-        this.left = shorten(input.left);
-        this.right = shorten(input.right);
-        this.aimVector = new Vec2(input.aimVector.x, input.aimVector.y);
-        this.attack = shorten(input.attack);
+    constructor(input) {
+        this.up = input.up;
+        this.down = input.down;
+        this.left = input.left;
+        this.right = input.right;
+        this.aimVector = new Vec2(shorten(input.aimVector.x), shorten(input.aimVector.y));
+        this.attack = input.attack;
     }
 
     static getMessageName() {
@@ -22,17 +22,19 @@ export default class NetPlayerInput {
     }
 
     getMessagePayload() {
-        return this.getInput();
+        return [this.getInput()];
     }
 
     getInput() {
-        return {
-            up: this.up,
-            down: this.down,
-            left: this.left,
-            right: this.right,
-            attack: this.attack,
-            aimVector: this.aimVector
-        };
+        const input = new Input();
+
+        input.up = this.up;
+        input.down = this.down;
+        input.left = this.left;
+        input.right = this.right;
+        input.attack = this.attack;
+        input.aimVector = this.aimVector;
+
+        return input;
     }
 }

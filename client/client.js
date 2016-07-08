@@ -1,175 +1,109 @@
-import _ from 'lodash';
-import client from 'socket.io-client';
 import Vec2 from 'vector2-node';
 import constants from './../common/constants';
 import Renderer from './renderer';
 import Chat from './chat';
+import ClientEntityManager from './lib/entity-manager';
+import ClientNetworkManager from './lib/network-manager';
 import Input from '../common/input';
+import NetChatMessage from '../common/net/chat-message';
+import NetDisconnect from '../common/net/disconnect';
+import NetLoadEntity from '../common/net/load-entity';
+import NetLoadGame from '../common/net/load-game';
+import NetPlayerInput from '../common/net/player-input';
+import NetRemoveEntity from '../common/net/remove-entity';
+import NetUpdateEntity from '../common/net/update-entity';
 
 const KEY_W = 87;
 const KEY_A = 65;
 const KEY_D = 68;
 const KEY_S = 83;
 const KEY_SPACE = 32;
+const DEBUG = true;
 
 export default class Client {
     constructor() {
-        let host = window.location.hostname;
-        host = `http://${host}:8888`;
+        const host = `http://${window.location.hostname}:8888`;
 
-        this.socket = client.connect(host, {
-            'reconnect': false
-        });
+        this.entityManager = new ClientEntityManager();
+        this.networkManager = new ClientNetworkManager(host);
 
-        this.entities = [];
-        this.registeredEntities = {};
-        this.registeredModels = {};
-        this.registerModels();
-        this.registerEntities();
         this.localPlayer = null;
         this.width = window.innerWidth - 300;
         this.height = window.innerHeight;
 
         this.renderer = new Renderer(this.width, this.height);
+        this.canvas = this.renderer.getRenderer();
         this.chat = new Chat();
         this.chat.setChatListener((message) => {
-            this.socket.emit('chat', message);
+            this.networkManager.sendMessage(new NetChatMessage(message));
         });
 
-        this.socket.on('chat', (message) => {
-            this.chat.newMessage(message);
+        this.networkManager.on(NetChatMessage, (message) => {
+            this.chat.newMessage(message.getText());
         });
 
-        this.socket.on('disconnect', () => {
+        this.networkManager.on(NetDisconnect, () => {
             let msg = 'You have been disconnected from the server. Refresh your browser to reconnect';
             this.chat.newMessage(msg)
         });
 
-        this.socket.on('playerName', (data) => {
+        this.networkManager.on(NetUpdateEntity, (entityData) => {
+            let networkedData = entityData.getUpdatedEntity();
 
-            for (let entity of this.entities) {
-                if (entity.uniqueId == data.uniqueId) {
-                    entity.renderable.name.setText(data.name);
-                    return false;
-                }
-            }
+            this.updateEntity(networkedData);
         });
 
-        this.socket.on('updateEntity', (entityData) => {
-            let updatedEntity = null;
+        window.getEntities = () => {
+            return this.entityManager.getEntities();
+        };
 
-            for (let entity of this.entities) {
-                if (entity.uniqueId === entityData.uniqueId) {
-                    updatedEntity = entity;
-                }
-            }
+        this.networkManager.on(NetRemoveEntity, (message) => {
+            const entityId = message.getUniqueId();
+            const removedEntity = this.entityManager.removeEntity(entityId);
 
-            if (updatedEntity === null) {
-                return;
-            }
-
-            updatedEntity.setPos(new Vec2(entityData.x, entityData.y));
-            updatedEntity.setAngle(entityData.angle);
-            updatedEntity.getPhysicsState().buildAABB();
-
-            updatedEntity.entityRenderable.x = entityData.x * 32;
-            updatedEntity.entityRenderable.y = -entityData.y * 32;
-
-            updatedEntity.entityRenderable.graphic.rotation = Math.PI - entityData.angle;
-
-            let debugString = "Pos: (" + updatedEntity.getPos().x + ', ' + updatedEntity.getPos().y + ')';
-            debugString += '\r\nAng: ' + updatedEntity.getAngle() * 180 / Math.PI;
-
-            updatedEntity.debugText.text = debugString;
-
-            updatedEntity.debugLines.clear();
-            updatedEntity.debugLines.beginFill(0x00FF00);
-            updatedEntity.debugLines.lineStyle(2, 0x00FF00, 1);
-            let mesh = updatedEntity.getLocalMesh();
-
-
-            mesh.forEach((vertex, index) => {
-                let screenPos = this.renderer.worldToScreen(vertex);
-                let nextPos = this.renderer.worldToScreen(mesh[index + 1 == mesh.length ? 0 : index + 1]);
-                updatedEntity.debugLines.moveTo(screenPos.x, screenPos.y);
-                updatedEntity.debugLines.lineTo(nextPos.x, nextPos.y);
-            });
-
-            updatedEntity.debugLines.endFill();
-
-            updatedEntity.aabbDebug.clear();
-            updatedEntity.aabbDebug.beginFill(0xFF0000);
-            updatedEntity.aabbDebug.lineStyle(2, 0xFF0000, 1);
-            let aabb = updatedEntity.getLocalAABB();
-
-            let vec1 = this.renderer.worldToScreen(aabb.min);
-            let vec2 = this.renderer.worldToScreen(new Vec2(aabb.min.x, aabb.max.y));
-            let vec3 = this.renderer.worldToScreen(aabb.max);
-            let vec4 = this.renderer.worldToScreen(new Vec2(aabb.max.x, aabb.min.y));
-            updatedEntity.aabbDebug.moveTo(vec1.x, vec1.y);
-            updatedEntity.aabbDebug.lineTo(vec2.x, vec2.y);
-
-            updatedEntity.aabbDebug.moveTo(vec2.x, vec2.y);
-            updatedEntity.aabbDebug.lineTo(vec3.x, vec3.y);
-
-            updatedEntity.aabbDebug.moveTo(vec3.x, vec3.y);
-            updatedEntity.aabbDebug.lineTo(vec4.x, vec4.y);
-
-            updatedEntity.aabbDebug.moveTo(vec4.x, vec4.y);
-            updatedEntity.aabbDebug.lineTo(vec1.x, vec1.y);
-
-            updatedEntity.aabbDebug.endFill();
-
+            this.renderer.removeEntity(removedEntity);
         });
 
-        this.socket.on('removeEntity', (entityId) => {
-            _.each(this.entities, (entity, index) => {
-                if (entity.uniqueId != entityId) {
-                    return;
-                }
+        this.networkManager.on(NetLoadEntity, (message) => {
+            const networkEntityData = message.getEntityData();
+            const uniqueId = networkEntityData.uniqueId;
+            const className = networkEntityData.className;
+            const instanceData = networkEntityData.instanceData;
 
-                this.renderer.removeEntity(entity);
-                this.entities.splice(index, 1);
-
-                return false;
-            });
-        });
-
-        this.socket.on('newEntity', (networkEntityData) => {
-            let uniqueId = networkEntityData.uniqueId;
-            let className = networkEntityData.className;
-            let instanceData = networkEntityData.instanceData;
+            console.log(networkEntityData);
 
             this.createEntity(className, uniqueId, instanceData);
         });
 
-        this.socket.on('loadEntity', (networkEntityData) => {
-            let uniqueId = networkEntityData.uniqueId;
-            let className = networkEntityData.className;
-            let instanceData = networkEntityData.instanceData;
-
-            let entity = this.createEntity(className, uniqueId, instanceData);
-
-            if (networkEntityData.isLocalPlayer) {
-                this.localPlayer = entity;
-                this.localPlayer.input = new Input();
+        this.networkManager.on(NetLoadGame, (message) => {
+            const worldMap = message.getMapData();
+            const localPlayerId = message.getLocalPlayerId();
+            console.log('lp = ', localPlayerId);
+            let i = 0;
+            for (let entity of this.entityManager.getEntities()) {
+                if (entity.uniqueId === localPlayerId) {
+                    this.localPlayer = entity;
+                    break;
+                }
             }
+
+            this.renderer.renderWorld(worldMap);
         });
 
-        this.socket.on('load', (data) => {
-            this.renderer.renderWorld(data.map);
-        });
-
-        $('#game canvas').attr('tabIndex', 0).focus();
-        $('#game canvas').on('click', (evt) => {
+        this.canvas.setAttribute('tabindex', 0);
+        this.canvas.focus();
+        this.canvas.addEventListener('click', (evt) => {
             evt.target.focus();
         });
-        $('#game canvas').keydown((evt) => {
+
+        this.canvas.addEventListener('keydown', (evt) => {
             let keyCode = evt.keyCode;
 
             if (!this.localPlayer || !this.localPlayer.input) {
                 return;
             }
+
+            this.localPlayer.hasInput = true;
 
             if (keyCode == KEY_W) {
                 this.localPlayer.input.up = 1;
@@ -184,12 +118,15 @@ export default class Client {
             }
         });
 
-        $('#game canvas').keyup((evt) => {
+        this.canvas.addEventListener('keyup', (evt) => {
             let keyCode = evt.keyCode;
 
             if (!this.localPlayer || !this.localPlayer.input) {
                 return;
             }
+
+            this.localPlayer.hasInput = true;
+
             if (keyCode == KEY_W) {
                 this.localPlayer.input.up = 0;
             } else if (keyCode == KEY_A) {
@@ -206,153 +143,25 @@ export default class Client {
         this.tick();
     }
 
-    registerModels() {
-        let hash2 = require('../models/*.json', {expand: true, hash: true});
+    createEntity(className, uniqueId, instanceData) {
+        console.log(className, uniqueId, instanceData);
+        const entity = this.entityManager.createEntity(className, uniqueId, instanceData);
 
-        // Iterate the /entities/ folder
-        _.forOwn(hash2, (loadedModel, requirePath) => {
+        this.renderer.addEntity(entity);
 
-            let modelName = requirePath.replace('.json', ''),
-                rawMesh = loadedModel.mesh,
-                builtMesh = [];
-
-            for (let i = 0; i < rawMesh.length; i += 2) {
-                builtMesh.push(new Vec2(rawMesh[i], rawMesh[i + 1]));
-            }
-
-
-            loadedModel.mesh = builtMesh;
-
-            this.registeredModels[modelName] = loadedModel;
-        });
-    }
-
-    registerEntities() {
-        let hash = require('../entities/**/shared.js', {expand: true, hash: true});
-        let hash2 = require('../entities/**/client.js', {expand: true, hash: true});
-        let rawEntities = {};
-        let resolvedEntities = {};
-        let resolveEntity = (entityName) => {
-            let entity = rawEntities[entityName];
-
-            if (entity.baseClass == null) {
-                return rawEntities[entityName];
-            }
-
-            let parentType = _.clone(resolveEntity(entity.baseClass));
-
-            return _.merge(parentType, _.clone(rawEntities[entityName]))
-        };
-
-        // Iterate the /entities/ folder
-        _.forOwn(hash2, (entityObject, requirePath) => {
-            let entityName = requirePath.split('/')[0];
-            rawEntities[entityName] = entityObject;
-        });
-
-        //All raw entities are loaded, make them inherit up their chain
-        _.forOwn(rawEntities, (entity, entityName) => {
-            resolvedEntities[entityName] = resolveEntity(entityName);
-        });
-
-        this.registeredEntities = resolvedEntities;
-    }
-
-    getEntityById(uniqueId) {
-        for (let entity of this.entities) {
-            if (entity.uniqueId == uniqueId) {
-                return entity;
-            }
+        if (DEBUG) {
+            this.renderer.debugEntity(entity);
         }
 
-        return null;
+        return entity;
     }
 
-    createEntity(entityClass, uniqueId, instanceData) {
-        let Entity = () => {};
-        let entityPrototype = this.registeredEntities[entityClass];
-        let createdEntity;
-        let opts = {
-            font: 'Arial',
-            size: 16,
-            strokeSize: 2,
-            stroke: 0xffffff,
-            color: 0
-        };
+    updateEntity(entityData) {
+        let updatedEntity = this.entityManager.updateEntity(entityData);
 
-        Entity.prototype = Object.create(entityPrototype);
-
-        createdEntity = new Entity();
-        createdEntity.uniqueId = uniqueId;
-        createdEntity.entityRenderable = new PIXI.Container();
-
-        //Synchronized server networked things
-        createdEntity.setModel(instanceData.model);
-
-        createdEntity._internalInit();
-        this.entities.push(createdEntity);
-        createdEntity.init();
-
-        let debugLines = new PIXI.Graphics();
-        let mesh = createdEntity.getMesh();
-
-        debugLines.beginFill(0x00FF00);
-        debugLines.lineStyle(2, 0x00FF00, 1);
-
-        mesh.forEach((vertex, index) => {
-            let screenPos = this.renderer.worldToScreen(vertex);
-            let nextPos = this.renderer.worldToScreen(mesh[index + 1 == mesh.length ? 0 : index + 1]);
-            debugLines.moveTo(screenPos.x, screenPos.y);
-            debugLines.lineTo(nextPos.x, nextPos.y);
-        });
-
-        debugLines.endFill();
-
-        createdEntity.debugLines = debugLines;
-        createdEntity.entityRenderable.addChild(debugLines);
-
-
-        let debugLines2 = new PIXI.Graphics();
-        let aabb = createdEntity.getLocalAABB();
-
-        let vec1 = this.renderer.worldToScreen(aabb.min);
-        let vec2 = this.renderer.worldToScreen(new Vec2(aabb.min.x, aabb.max.y));
-        let vec3 = this.renderer.worldToScreen(aabb.max);
-        let vec4 = this.renderer.worldToScreen(new Vec2(aabb.max.x, aabb.min.y));
-
-
-        debugLines2.beginFill(0xFF0000);
-        debugLines2.lineStyle(2, 0xFF0000, 1);
-
-        debugLines2.moveTo(vec1.x, vec1.y);
-        debugLines2.lineTo(vec2.x, vec2.y);
-
-        debugLines2.moveTo(vec2.x, vec2.y);
-        debugLines2.lineTo(vec3.x, vec3.y);
-
-        debugLines2.moveTo(vec3.x, vec3.y);
-        debugLines2.lineTo(vec4.x, vec4.y);
-
-        debugLines2.moveTo(vec4.x, vec4.y);
-        debugLines2.lineTo(vec1.x, vec1.y);
-
-        debugLines2.endFill();
-
-        createdEntity.aabbDebug = debugLines2;
-        createdEntity.entityRenderable.addChild(debugLines2);
-
-        let debugString = "Pos: (" + createdEntity.getPos().x + ', ' + createdEntity.getPos().y + ')';
-
-        createdEntity.debugText = this.renderer.createText(debugString, opts, createdEntity.entityRenderable);
-        createdEntity.debugText.position.y = 16;
-
-        let model = this.registeredModels[instanceData.model];
-
-        createdEntity.setTexture('/images/' + model.texture);
-
-        this.renderer.addEntity(createdEntity);
-
-        return createdEntity;
+        if (updatedEntity) {
+            this.renderer.updateRenderable(updatedEntity);
+        }
     }
 
     tick() {
@@ -363,6 +172,8 @@ export default class Client {
         });
 
         if (this.localPlayer) {
+            let lastInput = this.localPlayer.input.toString();
+
             let mouseWorldPos = this.renderer.getMouseWorldPos();
             let playerPos = this.localPlayer.getPos();
             let aimVec = new Vec2(
@@ -379,7 +190,11 @@ export default class Client {
             }
 
             this.localPlayer.input.aimVector = {x: aimVec.x, y: aimVec.y};
-            this.socket.emit('playerInput', this.localPlayer.input);
+
+            if (this.localPlayer.input.toString() !== lastInput || this.localPlayer.hasInput === true) {
+                this.localPlayer.hasInput = false;
+                this.networkManager.sendMessage(new NetPlayerInput(this.localPlayer.input));
+            }
 
             cameraPos.x = playerPos.x;
             cameraPos.y = playerPos.y;

@@ -7,12 +7,11 @@ import WorldMap from './worldmap';
 import NetChatMessage from '../common/net/chat-message';
 import NetLoadEntity from '../common/net/load-entity';
 import NetLoadGame from '../common/net/load-game';
-import NetNewEntity from '../common/net/new-entity';
 import NetPlayerInput from '../common/net/player-input';
 import NetRemoveEntity from '../common/net/remove-entity';
 import NetUpdateEntity from '../common/net/update-entity';
 
-const PLAYER_TIMEOUT = 30; // X seconds without activity and player is logged out.
+const PLAYER_TIMEOUT = 3; // X seconds without activity and player is logged out.
 
 export default class GameServer {
     constructor(options) {
@@ -29,7 +28,6 @@ export default class GameServer {
 
     start() {
         this.entityManager.registerEntities();
-        this.entityManager.setPlayerDisconnectedHandler(this.playerDisconnected.bind(this));
 
         this.networkManager.initialize();
         this.networkManager.setPlayerChatHandler(this.playerSay.bind(this));
@@ -48,11 +46,11 @@ export default class GameServer {
      */
     playerSay(player, message) {
         if (this.chatHandler.handleChatCommand(player, message)) {
-            const networkableMessage = player.getName() + ': ' + message;
+            const saidMessage = player.getName() + ': ' + message;
 
-            console.log(networkableMessage);
+            console.log(saidMessage);
 
-            this.networkManager.broadcastMessage(new NetChatMessage(networkableMessage));
+            this.networkManager.broadcastMessage(new NetChatMessage(saidMessage));
         }
     }
 
@@ -102,16 +100,7 @@ export default class GameServer {
             }
 
             if (entity.isBeingRemoved) {
-                if (entity.isPlayer()) {
-                    let message = 'Player has disconnected';
-                    if (entity.laggedOut) {
-                        message = 'Player has lagged out';
-                    }
-
-                    console.log(message);
-                }
-
-                this.removeEntity(entity, index);
+                this.removeEntity(entity);
             } else {
                 index++;
             }
@@ -153,15 +142,14 @@ export default class GameServer {
     playerConnected(player) {
         const ipAddress = player.getIPAddress();
         const playerCount = this.entityManager.getPlayers().length;
-        let loadMessage = new NetLoadGame({
-            map: this.worldMap.getTileMap()
-        });
+        let loadMessage = new NetLoadGame(this.worldMap.getTileMap(), player.uniqueId);
 
         player.on(NetChatMessage, (chatMessage) => {
             this.playerSay(player, chatMessage.getText());
         });
 
         player.on(NetPlayerInput, (inputMessage) => {
+
             player.lastInputTime = Date.now();
             player.input = inputMessage.getInput();
             player.physicsState.angle = Math.PI / 2 + player.input.aimVector.angle();
@@ -172,12 +160,9 @@ export default class GameServer {
         this.networkManager.broadcastMessage(new NetChatMessage('A new player has connected'));
 
         for (let entity of this.entityManager.getEntities()) {
-            let entityData = entity.getEntityNetworkData();
-            if (entity.uniqueId === player.uniqueId) {
-                entityData.isLocalPlayer = true;
+            if (entity !== player) {
+                player.sendMessage(new NetLoadEntity(entity.getEntityNetworkData()));
             }
-
-            player.sendMessage(new NetLoadEntity(entityData));
         }
         console.log(`Player (${ipAddress}) has connected`);
         player.setPos(this.playerSpawn);
@@ -185,7 +170,8 @@ export default class GameServer {
 
     validateConnectedPlayers(currentTime) {
         for (let player of this.entityManager.getPlayers()) {
-            if (currentTime - player.lastInputTime > PLAYER_TIMEOUT*1000) {
+            if (currentTime - player.lastInputTime > PLAYER_TIMEOUT * 1000) {
+                console.log(player.uniqueId, 'lagged out');
                 player.laggedOut = true;
                 player.shouldRemove(true);
             }
@@ -201,6 +187,11 @@ export default class GameServer {
     }
 
     playerDisconnected(player) {
+        const uniqueId = player.uniqueId;
+        let message = player.laggedOut ? `Player ${uniqueId} has lagged out` : `Player ${uniqueId} has disconnected`;
+
+        console.log(message);
+
         player.disconnect();
         this.networkManager.broadcastMessage(new NetChatMessage(player.getName() + ' has disconnected'));
     }
@@ -214,12 +205,16 @@ export default class GameServer {
     }
 
     sendNewEntity(newEntity) {
-        this.networkManager.broadcastMessage(new NetNewEntity(newEntity.getEntityNetworkData()));
+        this.networkManager.broadcastMessage(new NetLoadEntity(newEntity.getEntityNetworkData()));
     }
 
-    removeEntity(entity, index) {
+    removeEntity(entity) {
         const uniqueId = entity.uniqueId;
-        this.entityManager.removeEntity(entity, index);
+        this.entityManager.removeEntity(entity);
+
+        if (entity.isPlayer()) {
+            this.playerDisconnected(entity);
+        }
 
         this.networkManager.broadcastMessage(new NetRemoveEntity(uniqueId));
     }

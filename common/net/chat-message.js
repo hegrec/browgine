@@ -1,8 +1,8 @@
 const MESSAGE_NAME = 'chat';
 
 export default class NetChatMessage {
-    constructor() {
-        this.text = arguments[0];
+    constructor(text) {
+        this.text = text;
     }
 
     static getMessageName() {
@@ -14,6 +14,6 @@ export default class NetChatMessage {
     }
 
     getMessagePayload() {
-        return this.getText();
+        return [this.getText()];
     }
 }

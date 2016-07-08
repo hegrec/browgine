@@ -1,6 +1,6 @@
 import socketIo from 'socket.io';
 
-export default class NetworkManager {
+export default class ServerNetworkManager {
     constructor(port) {
         this.io = socketIo.listen(port);
 

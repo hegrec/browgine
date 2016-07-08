@@ -14,11 +14,6 @@ export default class ChatHandler {
 
             player.setName(name);
 
-            this.networkManager.emit('playerName', {
-                uniqueId: player.uniqueId,
-                name: name
-            });
-
             player.sendMessage(new NetChatMessage(`Your name has been set to ${name}`));
 
             return false;

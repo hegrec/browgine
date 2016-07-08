@@ -4,14 +4,12 @@ import path from 'path';
 
 const ENTITY_FOLDER = path.resolve(__dirname, '../../entities');
 
-export default class EntityManager {
+export default class ServerEntityManager {
     constructor() {
         this.players = [];
         this.entities = [];
         this.entitiesCreated = 0;
         this.registeredEntities = {};
-
-        this.handlePlayerDisconnected = function() {};
     }
 
     /**
@@ -74,7 +72,7 @@ export default class EntityManager {
         createdEntity = new Entity();
         createdEntity._internalInit();
         createdEntity.uniqueId = this.entitiesCreated++;
-        createdEntity.entityId = this.entities.push(createdEntity);
+        this.entities.push(createdEntity);
 
         createdEntity.init();
 
@@ -86,21 +84,22 @@ export default class EntityManager {
     }
 
     removeEntity(entity) {
-        const index = entity.entityId;
+        const uniqueId = entity.uniqueId;
+        let i;
 
-        this.entities.splice(index, 1);
+        for (i = 0; i < this.entities.length; i++) {
+            if (this.entities[i].uniqueId === uniqueId) {
+                this.entities.splice(i, 1);
+                break;
+            }
+        }
 
         if (entity.isPlayer()) {
-            let i = 0;
-            while (i < this.players.length) {
-                let player = this.players[i];
-                if (player.uniqueId == entity.uniqueId) {
+            for (i = 0; i < this.players.length; i++) {
+                if (this.players[i].uniqueId === entity.uniqueId) {
                     this.players.splice(i, 1);
-                    this.handlePlayerDisconnected(player);
                     break;
                 }
-
-                i++;
             }
         }
     }
@@ -128,9 +127,4 @@ export default class EntityManager {
 
         return null;
     }
-
-    setPlayerDisconnectedHandler(handler) {
-        this.handlePlayerDisconnected = handler;
-    }
-
 }

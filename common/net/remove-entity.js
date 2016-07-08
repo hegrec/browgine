@@ -1,15 +1,19 @@
 const MESSAGE_NAME = 'removeEntity';
 
 export default class NetRemoveEntity {
-    constructor() {
-        this.entityUniqueId = arguments[0];
+    constructor(uniqueId) {
+        this.entityUniqueId = uniqueId;
     }
 
     static getMessageName() {
         return MESSAGE_NAME;
     }
 
-    getMessagePayload() {
+    getUniqueId() {
         return this.entityUniqueId;
+    }
+
+    getMessagePayload() {
+        return [this.entityUniqueId];
     }
 }

@@ -12,8 +12,6 @@ export default class Renderer {
         this.renderer = new PIXI.WebGLRenderer(this.width, this.height);
         document.getElementById('game').appendChild(this.renderer.view);
 
-        this.unitPixelSize = 32; //Vec2(1, 1) is 64x64 pixels
-
         // Does not move, fixed position (This is the HUD)
         this.stage = new PIXI.Container();
         this.interaction = new PIXI.interaction.InteractionManager(this.renderer);
@@ -69,10 +67,82 @@ export default class Renderer {
     }
 
     addEntity(entity) {
+        var texture = entity.getTexture() || 'box.jpg';
+
+        var textureData = this.getTexture(texture);
+        console.log(textureData);
+        var entityGraphic = new PIXI.Sprite(textureData);
+
+        entity.entityRenderable = new PIXI.Container();
+        entity.entityRenderable.addChild(entityGraphic);
+
+        entityGraphic.anchor.x = 0.5;
+        entityGraphic.anchor.y = 0.5;
+        entityGraphic.click = function(data) {
+
+            console.log("CLICKED!");
+            console.log(data);
+        };
+
+        entity.entityRenderable.graphic = entityGraphic;
+
         this.entityLayer.addChild(entity.entityRenderable);
     }
 
+    updateRenderable(updatedEntity) {
+        const newPos = updatedEntity.getPos();
+
+        updatedEntity.entityRenderable.x = newPos.x * 32;
+        updatedEntity.entityRenderable.y = -newPos.y * 32;
+
+        updatedEntity.entityRenderable.graphic.rotation = Math.PI - updatedEntity.getAngle();
+
+        let debugString = "Pos: (" + newPos.x + ', ' + newPos.y + ')';
+        debugString += '\r\nAng: ' + updatedEntity.getAngle() * 180 / Math.PI;
+
+        updatedEntity.debugText.text = debugString;
+
+        updatedEntity.debugLines.clear();
+        updatedEntity.debugLines.beginFill(0x00FF00);
+        updatedEntity.debugLines.lineStyle(2, 0x00FF00, 1);
+        let mesh = updatedEntity.getLocalMesh();
+
+
+        mesh.forEach((vertex, index) => {
+            let screenPos = this.worldToScreen(vertex);
+            let nextPos = this.worldToScreen(mesh[index + 1 == mesh.length ? 0 : index + 1]);
+            updatedEntity.debugLines.moveTo(screenPos.x, screenPos.y);
+            updatedEntity.debugLines.lineTo(nextPos.x, nextPos.y);
+        });
+
+        updatedEntity.debugLines.endFill();
+
+        updatedEntity.aabbDebug.clear();
+        updatedEntity.aabbDebug.beginFill(0xFF0000);
+        updatedEntity.aabbDebug.lineStyle(2, 0xFF0000, 1);
+        let aabb = updatedEntity.getLocalAABB();
+
+        let vec1 = this.worldToScreen(aabb.min);
+        let vec2 = this.worldToScreen(new Vec2(aabb.min.x, aabb.max.y));
+        let vec3 = this.worldToScreen(aabb.max);
+        let vec4 = this.worldToScreen(new Vec2(aabb.max.x, aabb.min.y));
+        updatedEntity.aabbDebug.moveTo(vec1.x, vec1.y);
+        updatedEntity.aabbDebug.lineTo(vec2.x, vec2.y);
+
+        updatedEntity.aabbDebug.moveTo(vec2.x, vec2.y);
+        updatedEntity.aabbDebug.lineTo(vec3.x, vec3.y);
+
+        updatedEntity.aabbDebug.moveTo(vec3.x, vec3.y);
+        updatedEntity.aabbDebug.lineTo(vec4.x, vec4.y);
+
+        updatedEntity.aabbDebug.moveTo(vec4.x, vec4.y);
+        updatedEntity.aabbDebug.lineTo(vec1.x, vec1.y);
+
+        updatedEntity.aabbDebug.endFill();
+    }
+
     removeEntity(entity) {
+        console.log(entity.entityRenderable, 'totally goin');
         this.entityLayer.removeChild(entity.entityRenderable);
     }
 
@@ -132,6 +202,70 @@ export default class Renderer {
                 this.mapData.push(entityRenderable);
             });
         });
+    }
+
+    debugEntity(entity) {
+        let opts = {
+            font: 'Arial',
+            size: 16,
+            strokeSize: 2,
+            stroke: 0xffffff,
+            color: 0
+        };
+
+        let debugLines = new PIXI.Graphics();
+        let mesh = entity.getMesh();
+
+        debugLines.beginFill(0x00FF00);
+        debugLines.lineStyle(2, 0x00FF00, 1);
+
+        mesh.forEach((vertex, index) => {
+            let screenPos = this.worldToScreen(vertex);
+            let nextPos = this.worldToScreen(mesh[index + 1 == mesh.length ? 0 : index + 1]);
+            debugLines.moveTo(screenPos.x, screenPos.y);
+            debugLines.lineTo(nextPos.x, nextPos.y);
+        });
+
+        debugLines.endFill();
+
+        entity.debugLines = debugLines;
+        entity.entityRenderable.addChild(debugLines);
+
+
+        let debugLines2 = new PIXI.Graphics();
+        let aabb = entity.getLocalAABB();
+
+        let vec1 = this.worldToScreen(aabb.min);
+        let vec2 = this.worldToScreen(new Vec2(aabb.min.x, aabb.max.y));
+        let vec3 = this.worldToScreen(aabb.max);
+        let vec4 = this.worldToScreen(new Vec2(aabb.max.x, aabb.min.y));
+
+
+        debugLines2.beginFill(0xFF0000);
+        debugLines2.lineStyle(2, 0xFF0000, 1);
+
+        debugLines2.moveTo(vec1.x, vec1.y);
+        debugLines2.lineTo(vec2.x, vec2.y);
+
+        debugLines2.moveTo(vec2.x, vec2.y);
+        debugLines2.lineTo(vec3.x, vec3.y);
+
+        debugLines2.moveTo(vec3.x, vec3.y);
+        debugLines2.lineTo(vec4.x, vec4.y);
+
+        debugLines2.moveTo(vec4.x, vec4.y);
+        debugLines2.lineTo(vec1.x, vec1.y);
+
+        debugLines2.endFill();
+
+        entity.aabbDebug = debugLines2;
+        entity.entityRenderable.addChild(debugLines2);
+
+        let debugString = "Pos: (" + entity.getPos().x + ', ' + entity.getPos().y + ')';
+
+        entity.debugText = this.createText(debugString, opts, entity.entityRenderable);
+        entity.debugText.position.y = 16;
+
     }
 
     render(cameraPos) {

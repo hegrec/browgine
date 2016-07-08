@@ -1,15 +1,19 @@
 const MESSAGE_NAME = 'updateEntity';
 
 export default class NetUpdateEntity {
-    constructor() {
-        this.entityData = arguments[0];
+    constructor(entityData) {
+        this.entityData = entityData;
     }
 
     static getMessageName() {
         return MESSAGE_NAME;
     }
 
-    getMessagePayload() {
+    getUpdatedEntity() {
         return this.entityData;
+    }
+
+    getMessagePayload() {
+        return [this.entityData];
     }
 }
