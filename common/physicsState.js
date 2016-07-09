@@ -3,13 +3,6 @@ let Vec2 = require('vector2-node'),
 
 export default class PhysicsState {
     constructor() {
-        let defaultMesh = [
-            new Vec2(-0.5, 0.5),
-            new Vec2(0.5, 0.5),
-            new Vec2(0.5, -0.5),
-            new Vec2(-0.5, -0.5)
-        ];
-
         this.position = new Vec2();
         this.momentum = new Vec2();
         this.angle = 0;
@@ -27,8 +20,6 @@ export default class PhysicsState {
 
         this.time = 0;
         this.elasticity = 0.5;
-
-        this.setMesh(defaultMesh);
     }
 
     clone() {
@@ -123,13 +114,14 @@ export default class PhysicsState {
     }
 
     buildAABB() {
+        /*
         let orientation = this.angle;
-        let sin_o = Math.sin(orientation);
-        let cos_o = Math.cos(orientation);
         let corner1x = -this.halfWidth;
         let corner2x = this.halfWidth;
         let corner1y = -this.halfHeight;
         let corner2y = this.halfHeight;
+        let sin_o = Math.sin(orientation);
+        let cos_o = Math.cos(orientation);
 
         let xformed1x = corner1x * cos_o - corner1y * sin_o;
         let xformed2x = corner1x * sin_o + corner1y * cos_o;
@@ -142,7 +134,34 @@ export default class PhysicsState {
         this.aabbMin.x = -ex;
         this.aabbMin.y = -ey;
         this.aabbMax.x = ex;
-        this.aabbMax.y = ey;
+        this.aabbMax.y = ey;*/
+        let mesh = this.getLocalMesh();
+        let index;
+
+        this.aabbMin.x = null;
+        this.aabbMin.y = null;
+        this.aabbMax.x = null;
+        this.aabbMax.y = null;
+
+        for (index = 0; index < mesh.length; index++) {
+            let mX = mesh[index].x;
+            let mY = mesh[index].y;
+            if (this.aabbMin.x === null || mX < this.aabbMin.x) {
+                this.aabbMin.x = mX;
+            }
+
+            if (this.aabbMin.y === null || mY < this.aabbMin.y) {
+                this.aabbMin.y = mY;
+            }
+
+            if (this.aabbMax.x === null || mX > this.aabbMax.x) {
+                this.aabbMax.x = mX;
+            }
+
+            if (this.aabbMax.y === null || mY > this.aabbMax.y) {
+                this.aabbMax.y = mY;
+            }
+        }
     }
 
     getMass() {

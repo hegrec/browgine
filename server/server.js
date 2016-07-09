@@ -11,13 +11,13 @@ import NetPlayerInput from '../common/net/player-input';
 import NetRemoveEntity from '../common/net/remove-entity';
 import NetUpdateEntity from '../common/net/update-entity';
 
-const PLAYER_TIMEOUT = 3; // X seconds without activity and player is logged out.
+const PLAYER_TIMEOUT = 60; // X seconds without activity and player is logged out.
 
 export default class GameServer {
     constructor(options) {
         this.entityManager = new EntityManager(this);
         this.networkManager = new NetworkManager(options.socketIoPort);
-        this.tickLengthMs = 1000 / 20;
+        this.tickLengthMs = 1000 / 33;
         this.frame = 0;
         this.playerSpawn = new Vec2(2, -2);
         this.previousTick = Date.now();
@@ -27,8 +27,6 @@ export default class GameServer {
     }
 
     start() {
-        this.entityManager.registerEntities();
-
         this.networkManager.initialize();
         this.networkManager.setPlayerChatHandler(this.playerSay.bind(this));
         this.networkManager.setPlayerInitHandler(this.playerInit.bind(this));
@@ -122,8 +120,9 @@ export default class GameServer {
 
         player.lastAttackTime = Date.now();
 
+        let entType = Math.random() > 0.5 ? 'longblock' : 'base';
         //TODO: Remove this test code
-        let entity = this.createEntity('longblock');
+        let entity = this.createEntity(entType);
         let pos = player.getPos().add(player.getAimVector().scale(2));
 
         entity.setPos(pos);

@@ -15,7 +15,6 @@ export default class ClientEntityManager {
         return this.entities;
     }
 
-
     registerModels() {
         const hash2 = require('../../models/*.json', {expand: true, hash: true});
 
@@ -26,11 +25,11 @@ export default class ClientEntityManager {
                 rawMesh = loadedModel.mesh,
                 builtMesh = [];
 
-            for (let i = 0; i < rawMesh.length; i += 2) {
-                builtMesh.push(new Vec2(rawMesh[i], rawMesh[i + 1]));
+            for (let i = 0; i < rawMesh.length; i++) {
+                builtMesh.push(new Vec2(rawMesh[i][0], rawMesh[i][1]));
             }
 
-
+            loadedModel.name = modelName;
             loadedModel.mesh = builtMesh;
 
             this.registeredModels[modelName] = loadedModel;
@@ -69,25 +68,24 @@ export default class ClientEntityManager {
     }
 
     createEntity(entityClass, uniqueId, instanceData) {
+        const manager = this;
         let Entity = () => {};
         let entityPrototype = this.registeredEntities[entityClass];
         let createdEntity;
 
         Entity.prototype = Object.create(entityPrototype);
+        Entity.prototype.setModel = function (modelIdentifier) {
+            this.model = manager.registeredModels[modelIdentifier];
+            this.physicsState.setMesh(this.model.mesh);
+            this.setTexture('/images/' + this.model.texture);
+        };
 
         createdEntity = new Entity();
-        createdEntity.uniqueId = uniqueId;
-
-        //Synchronized server networked things
-        createdEntity.setModel(instanceData.model);
-
         createdEntity._internalInit();
+        createdEntity.uniqueId = uniqueId;
+        createdEntity.setModel(instanceData.model.name);
         this.entities.push(createdEntity);
         createdEntity.init();
-
-        let model = this.registeredModels[instanceData.model];
-
-        createdEntity.setTexture('/images/' + model.texture);
 
         return createdEntity;
     }

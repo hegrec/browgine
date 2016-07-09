@@ -7,7 +7,7 @@ export default class Renderer {
         this.mapData = [];
         //texture cache
         this.textures = {};
-        this.unitPixelSize = 32; //Vec2(1, 1) is 64x64 pixels
+        this.unitPixelSize = 64; //Vec2(1, 1) is X by Y pixels
 
         this.renderer = new PIXI.WebGLRenderer(this.width, this.height);
         document.getElementById('game').appendChild(this.renderer.view);
@@ -70,7 +70,6 @@ export default class Renderer {
         var texture = entity.getTexture() || 'box.jpg';
 
         var textureData = this.getTexture(texture);
-        console.log(textureData);
         var entityGraphic = new PIXI.Sprite(textureData);
 
         entity.entityRenderable = new PIXI.Container();
@@ -78,11 +77,6 @@ export default class Renderer {
 
         entityGraphic.anchor.x = 0.5;
         entityGraphic.anchor.y = 0.5;
-        entityGraphic.click = function(data) {
-
-            console.log("CLICKED!");
-            console.log(data);
-        };
 
         entity.entityRenderable.graphic = entityGraphic;
 
@@ -92,14 +86,14 @@ export default class Renderer {
     updateRenderable(updatedEntity) {
         const newPos = updatedEntity.getPos();
 
-        updatedEntity.entityRenderable.x = newPos.x * 32;
-        updatedEntity.entityRenderable.y = -newPos.y * 32;
+        updatedEntity.entityRenderable.x = newPos.x * this.unitPixelSize;
+        updatedEntity.entityRenderable.y = -newPos.y * this.unitPixelSize;
 
         updatedEntity.entityRenderable.graphic.rotation = Math.PI - updatedEntity.getAngle();
 
         let debugString = "Pos: (" + newPos.x + ', ' + newPos.y + ')';
-        debugString += '\r\nAng: ' + updatedEntity.getAngle() * 180 / Math.PI;
-
+        debugString += '\r\nAng: ' + updatedEntity.getAngleDegrees().toPrecision(4);
+        debugString += '\r\nID : ' + updatedEntity.uniqueId;
         updatedEntity.debugText.text = debugString;
 
         updatedEntity.debugLines.clear();
@@ -118,8 +112,8 @@ export default class Renderer {
         updatedEntity.debugLines.endFill();
 
         updatedEntity.aabbDebug.clear();
-        updatedEntity.aabbDebug.beginFill(0xFF0000);
-        updatedEntity.aabbDebug.lineStyle(2, 0xFF0000, 1);
+        updatedEntity.aabbDebug.beginFill(0xFF00FF);
+        updatedEntity.aabbDebug.lineStyle(2, 0xFF00FF, 1);
         let aabb = updatedEntity.getLocalAABB();
 
         let vec1 = this.worldToScreen(aabb.min);
@@ -142,7 +136,6 @@ export default class Renderer {
     }
 
     removeEntity(entity) {
-        console.log(entity.entityRenderable, 'totally goin');
         this.entityLayer.removeChild(entity.entityRenderable);
     }
 
@@ -214,10 +207,10 @@ export default class Renderer {
         };
 
         let debugLines = new PIXI.Graphics();
-        let mesh = entity.getMesh();
+        let mesh = entity.getLocalMesh();
 
         debugLines.beginFill(0x00FF00);
-        debugLines.lineStyle(2, 0x00FF00, 1);
+        debugLines.lineStyle(5, 0x00FF00, 1);
 
         mesh.forEach((vertex, index) => {
             let screenPos = this.worldToScreen(vertex);

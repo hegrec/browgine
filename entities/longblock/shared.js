@@ -5,12 +5,6 @@ var BaseSharedEntity = _.clone(require('./../base/shared'));
 var LongBlockShared = _.merge(BaseSharedEntity, {
     baseClass: "base",
     init: function() {
-        this.physicsState.vertices = [
-            new Vec2(-0.5, 1.5),
-            new Vec2(0.5, 1.5),
-            new Vec2(0.5, -1.5),
-            new Vec2(-0.5, -1.5)
-        ];
     }
 });
 

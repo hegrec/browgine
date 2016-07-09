@@ -53,10 +53,6 @@ export default class Client {
             this.updateEntity(networkedData);
         });
 
-        window.getEntities = () => {
-            return this.entityManager.getEntities();
-        };
-
         this.networkManager.on(NetRemoveEntity, (message) => {
             const entityId = message.getUniqueId();
             const removedEntity = this.entityManager.removeEntity(entityId);
@@ -70,16 +66,12 @@ export default class Client {
             const className = networkEntityData.className;
             const instanceData = networkEntityData.instanceData;
 
-            console.log(networkEntityData);
-
             this.createEntity(className, uniqueId, instanceData);
         });
 
         this.networkManager.on(NetLoadGame, (message) => {
             const worldMap = message.getMapData();
             const localPlayerId = message.getLocalPlayerId();
-            console.log('lp = ', localPlayerId);
-            let i = 0;
             for (let entity of this.entityManager.getEntities()) {
                 if (entity.uniqueId === localPlayerId) {
                     this.localPlayer = entity;
@@ -140,11 +132,20 @@ export default class Client {
             }
         });
 
+        if (DEBUG) {
+            window.getEntities = () => {
+                return this.entityManager.getEntities();
+            };
+
+            window.getEntity = (id) => {
+                return this.entityManager.getEntityById(id);
+            };
+        }
+
         this.tick();
     }
 
     createEntity(className, uniqueId, instanceData) {
-        console.log(className, uniqueId, instanceData);
         const entity = this.entityManager.createEntity(className, uniqueId, instanceData);
 
         this.renderer.addEntity(entity);

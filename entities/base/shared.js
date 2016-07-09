@@ -5,7 +5,7 @@ import PhysicsState from './../../common/physicsState';
 var BaseEntity = {
     uniqueId: 0,
     isBeingRemoved: 0,
-    modelName: 'base',
+    model: null,
     physicsType: constants.PHYSICS_TYPE_SIMULATE,
     appliedForce: null,
     appliedTorque: null,
@@ -51,12 +51,12 @@ var BaseEntity = {
         return this.physicsState.angle;
     },
 
-    getModel: function () {
-        return this.modelName;
+    getAngleDegrees() {
+        return this.physicsState.angle * 180 / Math.PI;
     },
 
-    setModel: function (model) {
-        this.modelName = model;
+    getModel: function () {
+        return this.model;
     },
 
     getMesh: function () {

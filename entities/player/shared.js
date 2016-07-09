@@ -11,6 +11,8 @@ var Player = {
         this.walkVelocity = new Vec2(0, 0);
         this.attackDelay = 500;
         this.name = "Unnamed Player";
+
+        this.setModel('longblock');
     },
     getAimVector: function () {
         return this.input.aimVector.copy();
