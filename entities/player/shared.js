@@ -9,7 +9,7 @@ var Player = {
         this.input = new Input();
         this.lastAttackTime = 0;
         this.walkVelocity = new Vec2(0, 0);
-        this.attackDelay = 500;
+        this.attackDelay = 100;
         this.name = "Unnamed Player";
 
         this.setModel('longblock');

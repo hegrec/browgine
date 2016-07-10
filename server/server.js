@@ -11,7 +11,7 @@ import NetPlayerInput from '../common/net/player-input';
 import NetRemoveEntity from '../common/net/remove-entity';
 import NetUpdateEntity from '../common/net/update-entity';
 
-const PLAYER_TIMEOUT = 60; // X seconds without activity and player is logged out.
+const PLAYER_TIMEOUT = 300; // X seconds without activity and player is logged out.
 
 export default class GameServer {
     constructor(options) {
@@ -23,7 +23,7 @@ export default class GameServer {
         this.previousTick = Date.now();
         this.worldMap = new WorldMap();
         this.physics = new Physics(this.worldMap);
-        this.chatHandler = new ChatHandler();
+        this.chatHandler = new ChatHandler(this.entityManager, this.networkManager);
     }
 
     start() {
@@ -57,11 +57,12 @@ export default class GameServer {
      * Here we run the game update  and set the next tick based on a framerate delta
      */
     tick() {
-        let now = Date.now();
+        const now = Date.now();
 
         this.frame++;
+
         if (this.previousTick + this.tickLengthMs <= now) {
-            let delta = (now - this.previousTick) / 1000;
+            const delta = (now - this.previousTick) / 1000;
             this.previousTick = now;
             this.update(now, delta);
             this.frame = 0;
@@ -168,7 +169,11 @@ export default class GameServer {
     }
 
     validateConnectedPlayers(currentTime) {
-        for (let player of this.entityManager.getPlayers()) {
+        let players = this.entityManager.getPlayers();
+        let index;
+
+        for (index = 0; index < players.length; index++) {
+            let player = players
             if (currentTime - player.lastInputTime > PLAYER_TIMEOUT * 1000) {
                 console.log(player.uniqueId, 'lagged out');
                 player.laggedOut = true;
@@ -178,10 +183,15 @@ export default class GameServer {
     }
 
     sendGameState() {
-        for (let entity of this.entityManager.getEntities()) {
-            let entityData = entity.getUpdateData();
+        const entities = this.entityManager.getEntities();
+        let index;
 
-            this.networkManager.broadcastMessage(new NetUpdateEntity(entityData));
+        for (index = 0; index < entities.length; index++) {
+            const activeState = entities[index].getUpdateData();
+            if (entities[index].stateChanged(activeState)) {
+                entities[index].setNetworkState(activeState);
+                this.networkManager.broadcastMessage(new NetUpdateEntity(activeState));
+            }
         }
     }
 

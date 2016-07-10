@@ -152,9 +152,11 @@ export default class ServerEntityManager {
      * @returns {*}
      */
     getEntityById(uniqueId) {
-        for (let entity of this.entities) {
-            if (entity.uniqueId == uniqueId) {
-                return entity;
+        let index;
+
+        for (index = 0; index < this.entities.length; index++) {
+            if (this.entities[index].uniqueId == uniqueId) {
+                return this.entities[index];
             }
         }
 

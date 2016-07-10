@@ -92,13 +92,14 @@ export default class Renderer {
         updatedEntity.entityRenderable.graphic.rotation = Math.PI - updatedEntity.getAngle();
 
         let debugString = "Pos: (" + newPos.x + ', ' + newPos.y + ')';
-        debugString += '\r\nAng: ' + updatedEntity.getAngleDegrees().toPrecision(4);
+        debugString += '\r\nAng: ' + updatedEntity.getAngleDegrees().toPrecision(6);
         debugString += '\r\nID : ' + updatedEntity.uniqueId;
+
         updatedEntity.debugText.text = debugString;
 
         updatedEntity.debugLines.clear();
         updatedEntity.debugLines.beginFill(0x00FF00);
-        updatedEntity.debugLines.lineStyle(2, 0x00FF00, 1);
+        updatedEntity.debugLines.lineStyle(5, 0x00FF00, 1);
         let mesh = updatedEntity.getLocalMesh();
 
 

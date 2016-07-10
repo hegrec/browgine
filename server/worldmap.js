@@ -73,6 +73,15 @@ export default class WorldMap {
         return this.tileMap[y][x];
     }
 
+    getBounds() {
+        return {
+            x: -this.centerIndex,
+            y: this.centerIndex,
+            width: this.tileMap[0].length,
+            height: this.tileMap.length
+        }
+    }
+
     getTileMap() {
         return this.tileMap;
     }

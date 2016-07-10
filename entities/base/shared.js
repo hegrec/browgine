@@ -2,6 +2,8 @@ import constants from './../../common/constants';
 import Vec2 from 'vector2-node';
 import PhysicsState from './../../common/physicsState';
 
+const vec_origin = new Vec2(0, 0);
+
 var BaseEntity = {
     uniqueId: 0,
     isBeingRemoved: 0,
@@ -84,7 +86,7 @@ var BaseEntity = {
     },
 
     physicsSimulate: function () {
-        return new Vec2(0, 0);
+        return vec_origin;
     },
 
     getVelocity: function () {

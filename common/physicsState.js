@@ -25,6 +25,7 @@ export default class PhysicsState {
     clone() {
         let cloneState = new PhysicsState();
         let clonedMesh = [];
+        let index = 0;
 
         cloneState.angle = this.angle;
         cloneState.momentum = this.momentum.clone();
@@ -58,26 +59,30 @@ export default class PhysicsState {
         let maxX = -99999;
         let minY = 99999;
         let maxY = -99999;
+        let index;
 
         this.vertices = mesh;
 
-        this.vertices.forEach((vertex) => {
-            if (vertex.x < minX) {
-                minX = vertex.x;
+        for (index = 0; index  < this.vertices.length; index++) {
+            const x = this.vertices[index].x;
+            const y = this.vertices[index].y;
+
+            if (x < minX) {
+                minX = x;
             }
 
-            if (vertex.x > maxX) {
-                maxX = vertex.x;
+            if (x > maxX) {
+                maxX = x;
             }
 
-            if (vertex.y < minY) {
-                minY = vertex.y;
+            if (y < minY) {
+                minY = y;
             }
 
-            if (vertex.y > maxY) {
-                maxY = vertex.y;
+            if (y > maxY) {
+                maxY = y;
             }
-        });
+        }
 
         this.halfHeight = (maxY - minY) / 2;
         this.halfWidth = (maxX - minX) / 2;
@@ -88,27 +93,29 @@ export default class PhysicsState {
 
     getMesh() {
         let copy = [];
+        let index;
 
-        this.vertices.forEach((vertex) => {
-            let vert = vertex.copy();
+        for (index = 0; index < this.vertices.length; index++) {
+            let vert = this.vertices[index].copy();
             vert.rotate(this.angle);
             vert = vert.add(this.position);
 
             copy.push(vert);
-        });
+        }
 
         return copy;
     }
 
     getLocalMesh() {
         let copy = [];
+        let index;
 
-        this.vertices.forEach((vertex) => {
-            let vert = vertex.copy();
+        for (index = 0; index < this.vertices.length; index++) {
+            let vert = this.vertices[index].copy();
             vert.rotate(this.angle);
 
             copy.push(vert);
-        });
+        }
 
         return copy;
     }

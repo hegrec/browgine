@@ -2,12 +2,12 @@ var _ = require('lodash');
 var BaseSharedEntity = _.clone(require('./shared'));
 
 function shorten(value) {
-    return Math.round(value * 100) / 100;
+    return Math.round(value * 1000) / 1000;
 }
 
 
 var BaseServerEntity = _.merge(BaseSharedEntity, {
-    serverVariable: 'testServer',
+    stateHash:  '',
     init: function() {
         this.setModel('base');
     },
@@ -20,6 +20,18 @@ var BaseServerEntity = _.merge(BaseSharedEntity, {
                 model: this.getModel()
             }
         };
+    },
+
+    stateChanged: function(data) {
+        return this.stateHash !== this.getStateHash(data);
+    },
+
+    getStateHash(data) {
+        return `${data.x}|${data.y}|${data.angle}`;
+    },
+
+    setNetworkState(data) {
+        this.stateHash = this.getStateHash(data);
     },
 
     getUpdateData: function() {

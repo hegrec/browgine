@@ -1,4 +1,5 @@
 import NetChatMessage from '../../common/net/chat-message';
+import Vec2 from 'vector2-node';
 
 export default class ChatHandler {
     constructor(entityManager, networkManager) {
