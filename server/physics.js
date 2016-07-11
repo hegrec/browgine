@@ -1,4 +1,3 @@
-import _ from 'lodash';
 import Vec2 from 'vector2-node';
 import SAT from 'sat';
 import constants from './../common/constants';
@@ -151,7 +150,7 @@ export default class Physics {
             let contactVelocity = relativeVelocity.dot(collision.minimalTranslation.vector);
 
             if (contactVelocity >= 0) {
-                return;
+                // return;
             }
 
             let e = 0.8;

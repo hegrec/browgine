@@ -25,16 +25,16 @@ export default class PhysicsState {
     clone() {
         let cloneState = new PhysicsState();
         let clonedMesh = [];
-        let index = 0;
+        let index;
 
         cloneState.angle = this.angle;
         cloneState.momentum = this.momentum.clone();
         cloneState.position = this.position.clone();
         cloneState.velocity = this.velocity.clone();
 
-        _.each(this.mesh,(vertex) => {
-            clonedMesh.push(vertex.clone());
-        });
+        for (index = 0; index < this.vertices.length; index++) {
+            clonedMesh.push(this.vertices[index].clone());
+        }
 
         cloneState.setMesh(clonedMesh);
 
